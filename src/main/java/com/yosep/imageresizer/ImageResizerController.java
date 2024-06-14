@@ -1,13 +1,10 @@
 package com.yosep.imageresizer;
 
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -24,25 +21,23 @@ import java.io.InputStream;
 @RestController
 public class ImageResizerController {
 
-    @PostMapping("/resize")
-    public ResponseEntity<BufferedImage> resize(InputStream dataStream, @RequestHeader(HttpHeaders.CONTENT_TYPE) String mimeType) throws IOException {
-        BufferedImage sourceImage = ImageIO.read(dataStream);
-
-        int newWidth = (int) (sourceImage.getWidth() * 0.5);
-        int newHeight = (int) (sourceImage.getHeight() * 0.5);
-        BufferedImage resizedImage = getScaledImage(sourceImage, newWidth, newHeight);
-
-        final HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(mimeType));
-
-        return new ResponseEntity<>(resizedImage, headers, HttpStatus.CREATED);
+    @GetMapping("/")
+    public String health() {
+        return "Healthy";
     }
 
-    @PostMapping("compress")
-    public ResponseEntity<BufferedImage> compress(InputStream dataStream, @RequestHeader(HttpHeaders.CONTENT_TYPE) String mimeType) throws IOException {
+    @PostMapping("/resize")
+    public ResponseEntity<BufferedImage> compress(InputStream dataStream,
+                                                  @RequestHeader(HttpHeaders.CONTENT_TYPE) String mimeType,
+                                                  @RequestParam("isMobile") boolean isMobile) throws IOException {
         BufferedImage sourceImage = ImageIO.read(dataStream);
 
-        float compressValue = 0.5F;
+        float compressValue;
+        if (isMobile)
+            compressValue = 0.2F;
+        else {
+            compressValue = 0.5F;
+        }
 
         final HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(mimeType));
@@ -97,6 +92,20 @@ public class ImageResizerController {
         byte [] byteArray = compressed.toByteArray();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(byteArray);
         return new ResponseEntity<>(ImageIO.read(inputStream), headers, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/reduce")
+    public ResponseEntity<BufferedImage> resize(InputStream dataStream, @RequestHeader(HttpHeaders.CONTENT_TYPE) String mimeType) throws IOException {
+        BufferedImage sourceImage = ImageIO.read(dataStream);
+
+        int newWidth = (int) (sourceImage.getWidth() * 0.5);
+        int newHeight = (int) (sourceImage.getHeight() * 0.5);
+        BufferedImage resizedImage = getScaledImage(sourceImage, newWidth, newHeight);
+
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(mimeType));
+
+        return new ResponseEntity<>(resizedImage, headers, HttpStatus.CREATED);
     }
 
     private BufferedImage getScaledImage(BufferedImage src, int w, int h) {

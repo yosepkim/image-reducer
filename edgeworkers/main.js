@@ -1,11 +1,18 @@
 import { httpRequest } from 'http-request';
 import { createResponse } from 'create-response';
 
+function isMobile(userAgent) {
+    const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+    return regex.test(userAgent);
+  }
+
 export async function responseProvider(request) {
     try {
+        const isDeviceMobile = isMobile(request.getHeader('User-Agent')[0]);
+
         return httpRequest(`${request.scheme}://${request.host}${request.url}`).then(async response => { 
             try {
-                const imageResizeUrl = "https://image-resizer.edgecloud9.com/resize";
+                const imageResizeUrl = `https://image-resizer.edgecloud9.com/resize?isMobile=${isDeviceMobile}`;
                 const contentType = response.getHeader('Content-Type');
 
                 const options = {
